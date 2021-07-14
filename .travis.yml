@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t ratikadocker/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true ratikadocker/react-test npm test
+
+after_success:
+  - docker build -t ratikadocker/multi-client ./client
+  - docker build -t ratikadocker/multi-nginx ./nginx
+  - docker build -t ratikadocker/multi-server ./server
+  - docker build -t ratikadocker/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push ratikadocker/multi-client
+  - docker push ratikadocker/multi-nginx
+  - docker push ratikadocker/multi-server
+  - docker push ratikadocker/multi-worker
